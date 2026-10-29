@@ -1,0 +1,63 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+model Student {
+  id           String               @id @default(uuid()) @db.Uuid
+  matricNumber String               @unique
+  email        String               @unique
+  passwordHash String
+  role         Role                 @default(STUDENT)
+  registrations CourseRegistration[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+}
+
+model Admin {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @unique
+  passwordHash String
+  role         Role     @default(ADMIN)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Course {
+  id            String               @id @default(uuid()) @db.Uuid
+  courseCode    String               @unique
+  courseName    String
+  isActive      Boolean              @default(true)
+  isElective    Boolean              @default(false)
+  registrations CourseRegistration[]
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+}
+
+model CourseRegistration {
+  id           String   @id @default(uuid()) @db.Uuid
+  studentId    String   @db.Uuid
+  courseId     String   @db.Uuid
+  registeredAt DateTime @default(now())
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Restrict)
+
+  @@unique([studentId, courseId])
+  @@index([courseId])
+}
